@@ -428,3 +428,7 @@ Spies sit in the middle and do not cause any change in execution pattern.
 # 5. Working with Legacy Code
 
 \-
+
+# 6. Maintaining Your Test Suite
+
+\-
