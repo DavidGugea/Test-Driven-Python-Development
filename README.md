@@ -440,3 +440,7 @@ Spies sit in the middle and do not cause any change in execution pattern.
 # 8. Extending unittest with nose2
 
 \-
+
+# 9. Unit Testing Patterns
+
+\-
