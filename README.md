@@ -433,6 +433,10 @@ Spies sit in the middle and do not cause any change in execution pattern.
 
 \-
 
-## 7. Executable Documentation with doctest
+# 7. Executable Documentation with doctest
+
+\-
+
+# 8. Extending unittest with nose2
 
 \-
