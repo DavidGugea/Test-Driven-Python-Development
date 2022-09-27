@@ -152,5 +152,174 @@ You can also disable autodiscovery and specify only certain tests to be run:
 
 * You can further refine to a specific class or method, such as python3 -m unittest stock_alerter.tests.test_stock.StockTest.
 
+# 2. Red-Green-Refactor - The TDD Cycle
 
+## Tests are executable requirements
 
+An observant reader might have caught on to the terminology used in the previous sentence, where I said that we can think about the requirement to implement next, instead of saying that we can think about the test to write next. Both statements are equivalent, because in TDD, tests are nothing but requirements. Each time we write a test and implement code to make it pass, what we actually do is make the code meet some requirement. Looking at it another way, tests are just executable requirement specifications. Requirement documentation often goes out of sync with what is actually implemented, but this is impossible with tests, because the moment they go out of sync, the test will fail.
+
+## Arrange-Act-Assert
+
+Let us start with the first requirement. Here is the test:
+
+```Python3
+def test_stock_update(self):
+    """
+    An update should set the price of the stock object
+    We will be using the `datetime` module for the timestamp
+    """
+    goog = Stock("GOOG")
+    goog.update(datetime(2014, 2, 12), price=10)
+    self.assertEqual(10, goog.price)
+```
+
+Here we call the update method (which doesn't exist yet) with the timestamp and price and then check that the price has been set correctly. We use the assertEqual method provided in the unittest.TestCase class to assert the value.
+
+Since we are using the datetime module to set the timestamp, we will have to add the line from datetime import datetime to the top of the file before it will run.
+
+This test follows the pattern of Arrange-Act-Assert.
+
+1. Arrange: Set up the context for the test. In this case, we create a Stock object. In other tests, it may involve creating multiple objects or hooking a few things together that will be required by the particular test.
+
+2. Act: Perform the action that we want to test. Here, we call the update method with the appropriate arguments.
+
+3. Assert: Finally we assert that the outcome was as expected.
+
+In this test, each part of the pattern took one line of code, but this is not always the case. Often there will be more than one line for each part of the test.
+
+## Testing for exceptions
+
+Since checking for exceptions is quite a common case, unittest provides a simpler way to do it:
+
+```Python3
+def test_negative_price_should_throw_ValueError(self):
+    goog = Stock("GOOG")
+    self.assertRaises(ValueError, goog.update, datetime(2014, 2, 13), -1)
+```
+
+The assertRaises method takes the expected exception as the first argument, the function to call as the second argument, and the parameters to the function are passed as in the remaining arguments. If you need to call the function with keyword arguments, then they can be passed in as keyword arguments to the assertRaises method.
+
+## Exploring assert methods
+
+Let us take the remaining requirement. Here is the test:
+
+```Python3
+def test_stock_price_should_give_the_latest_price(self):
+    goog = Stock("GOOG")
+    goog.update(datetime(2014, 2, 12), price=10)
+    goog.update(datetime(2014, 2, 13), price=8.4)
+    self.assertAlmostEqual(8.4, goog.price, delta=0.0001)
+```
+
+What this test does is to simply call update twice, and when we ask for the price, provide us with the newer one. The interesting point about the test is that we use the assertAlmostEqual method here. This method is often used when checking equality with floating point numbers. Why don't we use plain old assertEqual?
+
+The reason is that due to the way floating points are stored, the result may not be exactly the number you expect. There could be a very small difference between what you expect and the actual number that is stored. Taking this into account, the assertAlmostEqual method allows us to specify a tolerance in the comparison. So, for example, if we expect 8.4 but the actual value is 8.39999999, the test will still pass.
+
+The assertAlmostEqual method has two ways of specifying tolerance. The method we used above involves passing in a delta parameter which says that the difference between the expected value and the actual value should be within the delta. We've specified the delta parameter above as 0.0001, which means any value between 8.3999 and 8.4001 will pass the test. The other way of specifying tolerance is to use the places parameter as shown in the following code:
+
+self.assertAlmostEqual(8.4, goog.price, places=4)
+
+If this parameter is used, then both the expected and the actual values are rounded to the given number of decimal places before being compared. Note that you need to pass either the delta parameter or the places parameter. It is an error to pass both parameters together.
+
+So far, we've used the following assertion methods:
+
+* assertIsNone
+* assertEqual
+* assertRaises
+* assertAlmostEqual
+* fail
+
+The unittest module provides a large number of assertion methods that we can use for various conditions. Some of the common ones are listed below:
+
+* assertFalse(x, msg), assertTrue(x, msg)
+* assertIsNone(x, msg), assertIsNotNone(x, msg)
+* assertEqual(x, y, msg), assertNotEqual(x, y, msg)
+* assertAlmostEqual(x, y, places, msg, delta),
+* assertNotAlmostEqual(x, y, places, msg, delta)
+* assertGreater(x, y, msg), assertGreaterEqual(x, y, msg)
+* assertLess(x, y, msg), assertLessEqual(x, y, msg)
+* assertIs(x, y, msg), assertIsNot(x, y, msg)
+* assertIn(x, seq, msg), assertNotIn(x, seq, msg)
+* assertIsInstance(x, cls, msg), assertNotIsInstance(x, cls, msg)
+* assertRegex(text, regex, msg), assertNotRegex(text, regex, msg)
+* assertRaises(exception, callable, *args, **kwargs)
+* fail(msg)
+
+Most of the preceding functions are self explanatory. The following are some points that require a bit of explanation:
+
+* msg parameter: Most of the assert methods take an optional message parameter. A string can be passed here and it will be printed out in case the assertion fails. Usually, the default message is quite descriptive and this parameter is not required. Most of the time it is used with the fail method, as we saw a little while ago.
+
+* assertEqual versus assertIs: These two sets of assertions are very similar. The critical difference is that the former checks for equality while the latter assertion is used to check for object identity. The second assertion fails in previous example because although both objects are equal, they are still two different objects, and hence their identity is different:
+
+```python
+>>> test = unittest.TestCase()
+>>> test.assertEqual([1, 2], [1, 2]) # Assertion Passes
+>>> test.assertIs([1, 2], [1, 2]) # Assertion Fails
+Traceback (most recent call last):
+File "<stdin>", line 1, in <module>
+File "C:\Python34\lib\unittest\case.py", line 1067, in assertIs
+self.fail(self._formatMessage(msg, standardMsg))
+```
+
+* assertIn/assertNotIn: These asserts are used to check if an element is present in a sequence. This includes strings, lists, sets, and any other object that supports the in operator.
+
+* assertIsInstance/assertNotIsInstance: They check if an object is an instance of the given class. The cls parameter can also be a tuple of classes, to assert that the object is an instance of any one of them.
+
+The unittest module also provides some less-frequently-used assertions:
+
+* assertRaisesRegex(exception, regex, callable, *args, **kwargs): This assertion is similar to assertRaises, except that it takes an additional regex parameter. A regular expression can be passed in here and the assertion will check that the right exception was raised, as well as that the exception message matches the regular expression.
+
+* assertWarns(warning, callable, *args, **kwargs): It is similar to assertRaises, but checks that a warning was raised instead.
+
+* assertWarnsRegex(warning, callable, *args, **kwargs): It is the warning equivalent of assertRaisesRegex.
+
+## Specific asserts versus generic asserts
+
+One question that might come to your mind is why there are so many different assert methods. Why can't we just use assertTrue instead of the more specific assert, as shown in the following code:
+
+```Python3
+assertInSeq(x, seq)
+assertTrue(x in seq)
+
+assertEqual(10, x)
+assertTrue(x == 10)
+```
+
+While they are certainly equivalent, one motivation for using a specific assert is that you get a better error message if the assertion fails. When comparing objects like lists and dicts, the error message will show exactly where the difference occurs, making it much easier to understand. Therefore, it is recommended to use the more specific asserts wherever possible.
+
+## Setup and teardown
+
+If you notice, each test does the same setup by instantiating a Stock object that is then used in the test. In this case, the setup is just one line, but sometimes we might have to do multiple steps before we are ready to run the test. Instead of repeating this setup code in each and every test, we can make use of the setUp method provided by the TestCase class:
+
+```Python3
+def setUp(self):
+    self.goog = Stock("GOOG")
+```
+
+## Brittle tests
+
+A test is brittle when a change in the implementation details requires a change in the test cases. Ideally, a test should be testing the interface and not the implementation directly. After all, it is the interface that other units will be using to interact with this unit. When we test through the interface, it allows us the freedom to change the implementation of code without worrying about breaking the tests.
+
+There are three ways a test might fail:
+
+* If there is a bug introduced in the code being tested
+
+* If the test is tightly coupled to an implementation and we make changes to the code that modify the implementation, but without introducing a bug (for example, renaming a variable or modifying the internal design)
+
+* If the test requires some resource that is unavailable (for example, connecting to an external server, but the server is down)
+
+Ideally, the first case should be the only case where a test should fail. We should try to avoid the second and third as much as possible.
+
+Sometimes it might be important to test specific implementation details. For example, suppose we have a class that is expected to perform a complex calculation and cache it for future use. The only way to test the caching functionality would be to verify if the calculated value is stored in the cache. If we later change the caching method (for example, moving from a file cache to memcache), then we will have to change the test as well.
+
+Brittle tests can be worse than no tests, as the maintenance overhead of having to fix ten or twenty tests with every change in the implementation can turn developers away from TDD, increase the amount of frustration, and lead to teams disabling or skipping testing. Here are some guidelines on how to think about test brittleness:
+
+* If at all possible, avoid using implementation details in tests, and only use the publicly exposed interface. This includes using only the interface methods in setup code and assertions.
+
+* If the test needs to check functionality that is internal to the unit being tested, and it is an important functionality, then it might make sense to check for specific implementation actions.
+
+* If it is cumbersome to use the external interface to set up the exact state that we want, or there is no interface method that retrieves the specific value we want to assert, then we may need to peek into the implementation in our tests.
+
+* If we are fairly confident that the implementation details are very unlikely to change in the future, then we might go ahead and use implementation-specific details in the test.
+
+For the second and third cases, the important point is to understand that there is a tradeoff between convenience, test readability, and brittleness. There is no right answer and it is a subjective decision that needs to be taken, weighing up the pros and cons of each specific situation.
