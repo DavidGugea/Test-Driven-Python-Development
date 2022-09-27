@@ -327,3 +327,103 @@ For the second and third cases, the important point is to understand that there 
 # 3. Code Smells and Refactoring
 
 \-
+
+# 4. Using Mock Objects to Test Interactions
+
+## Using the Python mocking framework
+
+The unittest.mock module provided by Python is an extremely powerful mocking
+framework, yet at the same time it is very easy to use.
+
+Let us redo our tests using this library. First, we need to import the mock module at
+the top of our file as follows:
+
+```Python3
+from unittest import mock
+```
+
+Next, we rewrite our first test as follows:
+
+```Python3
+class EventTest(unittest.TestCase):
+    def test_a_listener_is_notified_when_an_event_is_raised(self):
+        listener = mock.Mock()
+
+        event = Event()
+        event.connect(listener)
+        event.fire()
+
+        self.assertTrue(listener.called)
+
+    def test_a_listener_is_passed_right_parameters(self):
+        listener = mock.Mock()
+
+        event = Event()
+        event.connect(listener)
+        event.fire(5, shape="square")
+
+        listener.assert_called_with(5, shape="square")
+        listener.assert_has_calls([mock.call(5, shape="square")])
+```
+
+The only change that we've made is to replace our own custom Mock class with the
+mock.Mock class provided by Python. That is it. With that single line change, our test
+is now using the inbuilt mocking class.
+
+## How much mocking is too much?
+
+In the previous few sections, we've seen the same test written with different
+levels of mocking. We started off with a test that didn't use any mocks at all, and
+subsequently mocked out each of the dependencies one by one. Which one of these
+solutions is the best?
+
+As with many things, this is a point of personal preference. A purist would probably
+choose to mock out all dependencies. My personal preference is to use real objects
+when they are small and self-contained. I would not have mocked out the Stock
+class. This is because mocks generally require some configuration with return values
+or side effects, and this configuration can clutter the test and make it less readable.
+For small, self-contained classes, it is simpler to just use the real object.
+
+At the other end of the spectrum, classes that might interact with external systems,
+or that take a lot of memory, or are slow are good candidates for mocking out.
+Additionally, objects that require a lot of dependencies on other object to initialize
+are candidates for mocking. With mocks, you just create an object, pass it in, and
+assert on parts that you are interested in checking. You don't have to create an
+entirely valid object.
+
+Even here there are alternatives to mocking. For example, when dealing with a
+database, it is common to mock out the database calls and hardcode a return value into
+the mock. This is because the database might be on another server, and accessing it
+makes the tests slow and unreliable. However, instead of mocks, another option could
+be to use a fast in-memory database for the tests. This allows us to use a live database
+instead of a mocked out database. Which approach is better depends on the situation.
+
+## Mocks versus stubs versus fakes versus spies
+
+We've been talking about mocks so far, but we've been a little loose on the
+terminology. Technically, everything we've talked about falls under the category of a
+test double. A test double is some sort of fake object that we use to stand in for a real
+object in a test case.
+
+***Mocks*** are a specific kind of test double that record information about calls that have
+been made to it, so that we can assert on them later.
+
+***Stubs*** are just an empty do-nothing kind of object or method. They are used
+when we don't care about some functionality in the test. For example, imagine
+we have a method that performs a calculation and then sends an e-mail. If we are
+testing the calculation logic, we might just replace the e-mail sending method with
+an empty do-nothing method in the test case so that no e-mails are sent out while
+the test is running.
+
+***Fakes*** are a replacement of one object or system with a simpler one that facilitates
+easier testing. Using an in-memory database instead of the real one, or the way we
+created a dummy TestAction earlier in this chapter would be examples of fakes.
+
+Finally, ***spies*** are objects that are like middlemen. Like mocks, they record the calls
+so that we can assert on them later, but after recording, they continue execution to
+the original code. Spies are different from the other three in the sense that they do
+not replace any functionality. After recording the call, the real code is still executed.
+Spies sit in the middle and do not cause any change in execution pattern.
+
+
+
