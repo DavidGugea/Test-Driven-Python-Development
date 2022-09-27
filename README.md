@@ -323,3 +323,7 @@ Brittle tests can be worse than no tests, as the maintenance overhead of having 
 * If we are fairly confident that the implementation details are very unlikely to change in the future, then we might go ahead and use implementation-specific details in the test.
 
 For the second and third cases, the important point is to understand that there is a tradeoff between convenience, test readability, and brittleness. There is no right answer and it is a subjective decision that needs to be taken, weighing up the pros and cons of each specific situation.
+
+# 3. Code Smells and Refactoring
+
+\-
