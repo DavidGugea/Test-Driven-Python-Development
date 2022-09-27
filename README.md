@@ -432,3 +432,7 @@ Spies sit in the middle and do not cause any change in execution pattern.
 # 6. Maintaining Your Test Suite
 
 \-
+
+## 7. Executable Documentation with doctest
+
+\-
