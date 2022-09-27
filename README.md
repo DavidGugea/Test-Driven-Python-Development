@@ -425,5 +425,6 @@ the original code. Spies are different from the other three in the sense that th
 not replace any functionality. After recording the call, the real code is still executed.
 Spies sit in the middle and do not cause any change in execution pattern.
 
+# 5. Working with Legacy Code
 
-
+\-
